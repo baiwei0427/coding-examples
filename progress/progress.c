@@ -4,16 +4,15 @@
 
 int main(int argc, char* argv[])
 {
-    int progress = 0;
-    int max_progress = 100;
+    double progress = 0;
     int bar_width = 20;
     int pos = 0;
     int i;
 
-    while (progress <= max_progress)
+    while (progress <= 1.0)
     {
         printf("[");
-        pos = bar_width * progress / max_progress;
+        pos = bar_width * progress;
         for (i = 0; i < bar_width; i++)
         {
             if (i < pos)
@@ -21,10 +20,10 @@ int main(int argc, char* argv[])
             else
                 printf(" ");
         }
-        printf("] %d %\r", progress);
+        printf("] %d %\r", (int)(progress * 100));
         fflush(stdout);
 
-        progress += max_progress/bar_width;
+        progress += 1.0/bar_width;
         sleep(1);
     }
     printf("\n");
