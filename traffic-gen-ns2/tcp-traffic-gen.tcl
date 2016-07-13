@@ -247,7 +247,7 @@ Agent_Aggr_pair instproc init_schedule {} {
 Agent_Aggr_pair instproc schedule {} {
         global ns flow_gen sim_end debug_mode init_fid packet_size
         $self instvar group_id
-        $self instvar snode dnoe
+        $self instvar snode dnode
         $self instvar tnext rx_flow_interval rx_flow_size
         $self instvar pairs nr_pairs nr_busy_pairs
         $self instvar agent_pair_type pair_tcp_type
@@ -260,7 +260,7 @@ Agent_Aggr_pair instproc schedule {} {
         ## if no available connection
         if {$nr_busy_pairs == $nr_pairs} {
                 if {$debug_mode == 1} {
-                        puts "[$ns now]: creating new connection $nr_pairs $snode -> $dnode"
+                        puts "[$ns now]: create new connection $nr_pairs for group $group_id"
                 }
 
                 $self set pairs($nr_pairs) [new $agent_pair_type]
@@ -276,8 +276,9 @@ Agent_Aggr_pair instproc schedule {} {
                 if {$flow_gen < $sim_end} {
                         incr flow_gen
                         incr nr_busy_pairs
+                        set id [expr $nr_pairs - 1]
                         set nbytes [expr [$rx_flow_size value] * $packet_size]
-                        $ns at [$ns now] "$pairs($nr_pairs) send $nbytes"
+                        $ns at [$ns now] "$pairs($id) send $nbytes"
                 }
         ## if there are some available connections
         } else {
