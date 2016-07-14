@@ -3,7 +3,7 @@
 # - flowlog: log file to record flow comlpetion information
 # - debug_mode: 1 (output necessary information for debug) or 0 (no output)
 # - sim_start: simulation start time
-# - sim_end: number of flows to generate
+# - flow_tot: total number of flows to generate
 # - init_fid: flow ID
 # - flow_gen: number of flows that have been generated
 # - flow_fin: number of flows that have finished
@@ -101,7 +101,7 @@ TCP_pair instproc set_flow_id { fid } {
 
 ###################### Generate a flow with nr_bytes bytes #####################
 TCP_pair instproc send { nr_bytes } {
-        global ns sim_end debug_mode
+        global ns flow_tot debug_mode
         $self instvar tcps tcpr is_busy group_id flow_id
         $self instvar start_time bytes
 
@@ -245,7 +245,7 @@ Agent_Aggr_pair instproc init_schedule {} {
 }
 
 Agent_Aggr_pair instproc schedule {} {
-        global ns flow_gen sim_end debug_mode init_fid packet_size
+        global ns flow_gen flow_tot debug_mode init_fid packet_size
         $self instvar group_id
         $self instvar snode dnode
         $self instvar tnext rx_flow_interval rx_flow_size
@@ -253,7 +253,7 @@ Agent_Aggr_pair instproc schedule {} {
         $self instvar agent_pair_type pair_tcp_type
 
         ## we have generate enough flows
-        if {$flow_gen >= $sim_end} {
+        if {$flow_gen >= $flow_tot} {
                 return
         }
 
@@ -273,7 +273,7 @@ Agent_Aggr_pair instproc schedule {} {
                 incr init_fid; #update global flow ID
                 incr nr_pairs; #increase the number of pairs for this group
 
-                if {$flow_gen < $sim_end} {
+                if {$flow_gen < $flow_tot} {
                         incr flow_gen
                         incr nr_busy_pairs
                         set id [expr $nr_pairs - 1]
@@ -294,7 +294,7 @@ Agent_Aggr_pair instproc schedule {} {
                         puts "[$ns now]: cannot find available connection $snode -> $dnode"
                 }
 
-                if {$flow_gen < $sim_end} {
+                if {$flow_gen < $flow_tot} {
                         incr flow_gen
                         incr nr_busy_pairs
                         set nbytes [expr [$rx_flow_size value] * $packet_size]
@@ -302,7 +302,7 @@ Agent_Aggr_pair instproc schedule {} {
                 }
         }
 
-        if {$flow_gen < $sim_end} {
+        if {$flow_gen < $flow_tot} {
                 set dt [$rx_flow_interval value]
                 $self set tnext [expr [$ns now] + $dt]
                 $ns at $tnext "$self schedule"
@@ -316,7 +316,7 @@ Agent_Aggr_pair instproc schedule {} {
 # fct: flow completion time in seconds
 # timeouts: number of TCP timeouts this flow experiences
 Agent_Aggr_pair instproc fin_notify {pid bytes fct timeouts} {
-        global flow_fin sim_end
+        global flow_fin flow_tot
         $self instvar logfile
         $self instvar nr_busy_pairs; # the number of busy pairs
         $self instvar group_id
@@ -329,7 +329,7 @@ Agent_Aggr_pair instproc fin_notify {pid bytes fct timeouts} {
         }
 
         incr flow_fin; # increase the total number of finished flows
-        if {$flow_fin >= $sim_end} {
+        if {$flow_fin >= $flow_tot} {
                 finish
         }
 }
