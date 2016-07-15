@@ -68,7 +68,8 @@ for {set i 0} {$i < $num_sender} {incr i} {
 
         set agtagr($i) [new Agent_Aggr_pair]
         $agtagr($i) setup $senders($i) $receiver $i $connections_per_pair "TCP_pair" $source_alg
-        $agtagr($i) set_PCarrival_process [expr $lambda / ($num_sender - 1)] $flow_cdf [expr 17 * $i] [expr 33 * $i]
+        ## Note that RNG seed should not be zero
+        $agtagr($i) set_PCarrival_process [expr $lambda / $num_sender] $flow_cdf [expr 17 * $i + 1] [expr 33 * $i + 1]
         $agtagr($i) attach-logfile $flowlog
 
         $ns at 0.1 "$agtagr($i) warmup 0.5 $packet_size"
