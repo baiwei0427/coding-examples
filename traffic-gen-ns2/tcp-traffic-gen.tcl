@@ -7,7 +7,6 @@
 # - init_fid: flow ID
 # - flow_gen: number of flows that have been generated
 # - flow_fin: number of flows that have finished
-# - packet_size: MSS size in bytes
 
 Agent/TCP/FullTcp instproc set_callback {tcp_pair func} {
         $self instvar ctrl cb_func
@@ -245,7 +244,7 @@ Agent_Aggr_pair instproc init_schedule {} {
 }
 
 Agent_Aggr_pair instproc schedule {} {
-        global ns flow_gen flow_tot debug_mode init_fid packet_size
+        global ns flow_gen flow_tot debug_mode init_fid
         $self instvar group_id
         $self instvar snode dnode
         $self instvar tnext rx_flow_interval rx_flow_size
@@ -277,8 +276,8 @@ Agent_Aggr_pair instproc schedule {} {
                         incr flow_gen
                         incr nr_busy_pairs
                         set id [expr $nr_pairs - 1]
-                        set nbytes [expr [$rx_flow_size value] * $packet_size]
-                        $ns at [$ns now] "$pairs($id) send $nbytes"
+                        set nbytes [expr max([$rx_flow_size value], 2)]
+                        $ns at-now "$pairs($id) send $nbytes"
                 }
         ## if there are some available connections
         } else {
@@ -297,8 +296,8 @@ Agent_Aggr_pair instproc schedule {} {
                 if {$flow_gen < $flow_tot} {
                         incr flow_gen
                         incr nr_busy_pairs
-                        set nbytes [expr [$rx_flow_size value] * $packet_size]
-                        $ns at [$ns now] "$pairs($id) send $nbytes"
+                        set nbytes [expr max([$rx_flow_size value], 2)]
+                        $ns at-now "$pairs($id) send $nbytes"
                 }
         }
 

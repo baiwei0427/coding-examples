@@ -13,7 +13,7 @@ set source_alg Agent/TCP/FullTcp/Sack
 set switch_alg RED
 
 set flow_cdf CDF_dctcp.tcl
-set mean_flow_size [expr 1138 * 1460]
+set mean_flow_size 1711250
 
 set num_sender 50
 set connections_per_pair 5
