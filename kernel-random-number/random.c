@@ -8,7 +8,8 @@ int init_module(void)
 
         for (i = 0; i < 10; i++) {
                 get_random_bytes(&random, sizeof(random));
-                random = random % 100;
+                while (random > 100)
+                        random -= 100;
                 printk(KERN_INFO "%u\n", random);
         }
 
