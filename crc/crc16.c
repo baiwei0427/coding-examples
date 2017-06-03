@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define TABLE_SIZE (256 * 256)
+#define TABLE_SIZE (256)
 
 unsigned short crc_table[TABLE_SIZE];
 const unsigned short generator = 0x1021;   /* generator polynomial for CRC 16 */
@@ -11,7 +11,7 @@ void gen_lookuptable()
         unsigned short crc, msb;
 
         for (i = 0; i < TABLE_SIZE; i++) {
-                crc = i;
+                crc = i << 8;
                 for (j = 0; j < 8; j ++) {
                         msb = crc & 0x8000;
                         crc = crc << 1;
@@ -28,10 +28,13 @@ unsigned short crc16_lookuptable(unsigned char *data, unsigned int len)
 {
         unsigned short crc = 0;
         unsigned int i;
+        unsigned char pos;
 
         for (i = 0; i < len; i++) {
-                crc = crc ^ ((unsigned short)data[i] << 8);     /* XOR-in next input byte */
-                crc = crc_table[(int)crc];      /* get CRC result based on lookup table */
+                /* XOR-in next input byte into MSB of crc, that's our new intermediate divident */
+                pos = (unsigned char)(crc >> 8) ^ data[i];
+                /* Shift out the MSB used for division per lookup table and XOR with the remainder */
+                crc = (crc << 8) ^ crc_table[(int)pos];
         }
 
         return crc;
