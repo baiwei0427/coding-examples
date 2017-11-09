@@ -109,6 +109,7 @@ int main(int argc, char **argv)
 
                 // Check new connection
                 if (FD_ISSET(listenfd, &rset)) {
+                        clilen = sizeof(cliaddr);
                         if ((connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen)) < 0) {
                                 fprintf(stderr, "Error: accept\n");
                                 return EXIT_FAILURE;
