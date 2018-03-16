@@ -15,8 +15,17 @@ struct Inst {
         struct Inst *y;
 };
 
+struct Thread {
+        struct Inst *pc;        // program counter
+        char *sp;               // string pointer
+};
+
+struct Thread thread(struct Inst *pc, char *sp);
+
+// regular expression matching functions 
 int recursive(struct Inst *pc, char *sp);
 int recursiveloop(struct Inst *pc, char *sp);
+int backtrackingvm(struct Inst *prog, char *input);
 
 int main(int argc, char **argv)
 {        
@@ -56,13 +65,19 @@ int main(int argc, char **argv)
         }
         str[n] = 0;
 
-        if (recursiveloop(regex_insts, str) == 1) {
+        if (backtrackingvm(regex_insts, str) == 1) {
                 printf ("Match\n");
         } else {
                 printf("Don't match\n");
         }
 
         return EXIT_SUCCESS;
+}
+
+struct Thread thread(struct Inst *pc, char *sp)
+{
+        struct Thread t = {.pc = pc, .sp = sp};
+        return t;
 }
 
 int recursive(struct Inst *pc, char *sp)
@@ -122,4 +137,62 @@ int recursiveloop(struct Inst *pc, char *sp)
         }
 
         return -1;
+}
+
+int backtrackingvm(struct Inst *prog, char *input)
+{
+        int MAXTHREAD = 25;
+        struct Thread ready[MAXTHREAD];
+        int nready;
+        struct Inst *pc;
+        char *sp;
+
+        // queue initial thread
+        ready[0] = thread(prog, input);
+        nready = 1;
+
+        // run threads in stack order
+        while (nready > 0) {
+                --nready;       // pop state for next thread to run
+                pc = ready[nready].pc;
+                sp = ready[nready].sp;
+
+                // run a thread
+                while (1) {
+                        switch (pc->opcode) {
+                                case Char:
+                                        if (*sp != pc->c) {
+                                                // don't match & kill this thread
+                                                goto Dead;
+                                        }
+                                        
+                                        // move to next instruction pointer and string pointer
+                                        pc++;
+                                        sp++;
+                                        continue;
+                                case Match:
+                                        // match
+                                        return 1;
+                                case Jmp:
+                                        // jump to another instruction                        
+                                        pc = pc->x;
+                                        continue;
+                                case Split:
+                                        if (nready >= MAXTHREAD) {
+                                                fprintf(stderr, "too many threads\n");
+                                                return -1;
+                                        }
+
+                                        // queue a new thread
+                                        ready[nready++] = thread(pc->y, sp);
+                                        pc = pc->x;     // continue current thread
+                                        // printf("# of threads: %d ", nready);
+                                        continue; 
+                        }                
+                }
+
+                Dead:;
+        }
+
+        return 0;
 }
