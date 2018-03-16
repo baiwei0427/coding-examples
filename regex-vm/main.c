@@ -18,6 +18,8 @@ struct Inst {
 
 int recursive(struct Inst *pc, char *sp);
 
+int recursiveloop(struct Inst *pc, char *sp);
+
 int main(int argc, char **argv)
 {
         // instructions of regex pattern "a+b+" 
@@ -33,7 +35,7 @@ int main(int argc, char **argv)
                 return EXIT_FAILURE;
         }
 
-        if (recursive(regex_insts, argv[1]) == 1) {
+        if (recursiveloop(regex_insts, argv[1]) == 1) {
                 printf ("Match\n");
         } else {
                 printf("Don't match\n");
@@ -59,9 +61,43 @@ int recursive(struct Inst *pc, char *sp)
                         // jump to another instruction
                         return recursive(pc->x, sp);
                 case Split:
-                        if (recursive(pc->x, sp) == 1)
+                        if (recursive(pc->x, sp) == 1) {
                                 return 1;
+                        }
                         return recursive(pc->y, sp);
+        }
+
+        return -1;
+}
+
+int recursiveloop(struct Inst *pc, char *sp)
+{
+        while (1) {
+                switch(pc->opcode) {
+                        case Char:
+                                if (*sp != pc->c) {
+                                        // don't match
+                                        return 0;
+                                }
+                                // move to next instruction pointer and string pointer
+                                pc++;
+                                sp++;
+                                continue;
+                        case Match:
+                                // match
+                                return 1;
+                        case Jmp:
+                                // jump to another instruction                        
+                                pc = pc->x;
+                                continue;
+                        case Split:
+                                if (recursive(pc->x, sp) == 1) {
+                                        return 1;
+                                }
+                                pc = pc->y;
+                                continue;                                
+                }
+                return -1;               
         }
 
         return -1;
