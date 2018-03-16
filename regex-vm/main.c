@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdlib.h>
 
 enum {  // operation code
         Char,
@@ -17,25 +16,47 @@ struct Inst {
 };
 
 int recursive(struct Inst *pc, char *sp);
-
 int recursiveloop(struct Inst *pc, char *sp);
 
 int main(int argc, char **argv)
-{
-        // instructions of regex pattern "a+b+" 
-        struct Inst regex_insts[5] = {
-                {.opcode = Char, .c = 'a'},                                     // 0  char a
-                {.opcode = Split, .x = &regex_insts[0], .y = &regex_insts[2]},  // 1  split 0 2
-                {.opcode = Char, .c = 'b'},                                     // 2  char b
-                {.opcode = Split, .x = &regex_insts[2], .y = &regex_insts[4]},  // 3  split 2 4
-                {.opcode = Match}                                               // 4  match
-        };
-
+{        
         if (argc != 2) {
                 return EXIT_FAILURE;
         }
 
-        if (recursiveloop(regex_insts, argv[1]) == 1) {
+        const int n = atoi(argv[1]);
+        if (n <= 0) {
+                return EXIT_FAILURE;
+        }
+
+        // to store instructions of regex pattern a?^n a^n
+        struct Inst regex_insts[3 * n + 1];
+        // to store subject string a^n
+        char str[n + 1];
+
+        // construct instructions
+        for (int i = 0; i < n; i++) {
+                // instructions of a?
+                regex_insts[2 * i].opcode = Split;
+                regex_insts[2 * i].x = &regex_insts[2 * i + 1];
+                regex_insts[2 * i].y = &regex_insts[2 * i + 2];
+
+                regex_insts[2 * i + 1].opcode = Char;
+                regex_insts[2 * i + 1].c = 'a';
+
+                // instructions of a
+                regex_insts[2 * n + i].opcode = Char;
+                regex_insts[2 * n + i].c = 'a';
+        }
+        regex_insts[3 * n].opcode = Match;
+
+        // construct subject string
+        for (int i = 0; i < n; i++) {
+                str[i] = 'a';
+        }
+        str[n] = 0;
+
+        if (recursiveloop(regex_insts, str) == 1) {
                 printf ("Match\n");
         } else {
                 printf("Don't match\n");
@@ -91,7 +112,7 @@ int recursiveloop(struct Inst *pc, char *sp)
                                 pc = pc->x;
                                 continue;
                         case Split:
-                                if (recursive(pc->x, sp) == 1) {
+                                if (recursiveloop(pc->x, sp) == 1) {
                                         return 1;
                                 }
                                 pc = pc->y;
