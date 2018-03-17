@@ -1,12 +1,14 @@
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include "common.h"
 #include "backtracking.h"
 
+using namespace std;
+
 int main(int argc, char **argv)
 {        
         if (argc != 3) {
-                fprintf (stderr, "No enough arguments\n");
+                cerr << "No enough arguments" << endl;
                 return EXIT_FAILURE;
         }
 
@@ -37,9 +39,9 @@ int main(int argc, char **argv)
         regex_insts[3 * n].opcode = Match;
 
         if (backtrackingvm(regex_insts, str) == 1) {
-                printf ("Match\n");
+                cout << "Match" << endl;
         } else {
-                printf("Don't match\n");
+                cout << "Don't match" << endl;
         }
 
         return EXIT_SUCCESS;

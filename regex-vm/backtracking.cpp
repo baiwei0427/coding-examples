@@ -1,6 +1,8 @@
-#include <stdio.h>
+#include <iostream>
 #include "backtracking.h"
 #include "common.h"
+
+using namespace std;
 
 struct Thread thread(struct Inst *pc, char *sp)
 {
@@ -107,7 +109,7 @@ int backtrackingvm(struct Inst *prog, char *input)
                                         continue;
                                 case Split:
                                         if (nready >= MAXTHREAD) {
-                                                fprintf(stderr, "too many threads\n");
+                                                cerr << "too many threads" << endl;
                                                 return -1;
                                         }
 
