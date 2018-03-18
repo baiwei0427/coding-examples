@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "common.h"
 #include "backtracking.h"
+#include "thompson.h"
 
 using namespace std;
 
@@ -38,12 +39,22 @@ int main(int argc, char **argv)
         }
         regex_insts[3 * n].opcode = Match;
 
-        if (backtrackingvm(regex_insts, str) == 1) {
+        //if (backtrackingvm(regex_insts, str) == 1) {
+        
+        cout << "Thompson's algorithm: ";
+        if (thompsonvm(regex_insts, str) == 1) {
                 cout << "Match" << endl;
         } else {
                 cout << "Don't match" << endl;
         }
 
+        cout << "Backtracking: ";
+        if (recursiveloop(regex_insts, str) == 1) {
+                cout << "Match" << endl;
+        } else {
+                cout << "Don't match" << endl;
+        }
+        
         return EXIT_SUCCESS;
 }
 

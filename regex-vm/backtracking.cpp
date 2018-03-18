@@ -4,6 +4,11 @@
 
 using namespace std;
 
+struct Thread {
+        struct Inst *pc;        // program counter
+        char *sp;               // string pointer
+};
+
 struct Thread thread(struct Inst *pc, char *sp)
 {
         struct Thread t = {.pc = pc, .sp = sp};
