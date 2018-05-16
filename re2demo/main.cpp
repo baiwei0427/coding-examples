@@ -70,7 +70,6 @@ int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector,
                 }
                 return count;
         } else {
-                cout << "Don't match" << endl;
                 return 0;
         }        
 }
