@@ -20,7 +20,12 @@ int main(int argc, char **argv)
   		return -1;
   	}
 
-        RE2 re("(" + string(argv[1]) + ")");
+        RE2::Options opt;
+        //opt.set_case_sensitive(false);  // Do case less matching  
+        //opt.set_dot_nl(true);           // Let . match \n
+
+        RE2 re("(" + string(argv[1]) + ")", opt);
+        
         if (!re.ok()) {
                 cerr << "Fail to compile regex pattern " << argv[1] << endl;
                 return -1;
@@ -44,7 +49,9 @@ int main(int argc, char **argv)
 }
 
 int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector, int ovecsize, char **error_msg)
-{
+{       
+        int offset = 0;
+
         // Construct subject string
         re2::StringPiece str(s, slen); 
         unsigned int count = re.NumberOfCapturingGroups();
@@ -63,14 +70,24 @@ int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector,
                 args_ptrs[i] = &args[i];
         }
 
-        if (RE2::PartialMatchN(str, re, args_ptrs, count)) {
+        while (str.length() > 0 && RE2::PartialMatchN(str, re, args_ptrs, count)) {
+                // The pattern matches an empty string.  
+                if (submatches[0].length() == 0) {
+                        // Match from the next byte
+                        offset++;
+                        str.remove_prefix(1);
+                        continue;
+                }
+
+                // The pattern matches a non-empty string
                 for (unsigned int i = 0; i < count; i++) {
-                        ovector[2 * i] = submatches[i].data() - s;
+                        ovector[2 * i] = submatches[i].data() - str.data() + offset;
                         ovector[2 * i + 1] = ovector[2 * i] + submatches[i].length() - 1;
                 }
                 return count;
-        } else {
-                return 0;
-        }        
+        }
+
+        // Not matching!
+        return 0;
 }
 
