@@ -35,11 +35,11 @@ int main(int argc, char **argv)
         if (rc > 0) {
                 cout << "Match" << endl;
                 for (int i = 0; i < rc; i++) {
-                        printf("Submatch %d [%d, %d]: %.*s\n", 
+                        printf("Submatch %d [%d, %d): %.*s\n", 
                                i + 1,                                           // submatch ID
                                ovector[2 * i],                                  // submatch start offset
                                ovector[2 * i + 1],                              // submatch end offset
-                               ovector[2 * i + 1] - ovector[2 * i] + 1,         // submatch length
+                               ovector[2 * i + 1] - ovector[2 * i],             // submatch length
                                argv[2] + ovector[2 * i]);                       // submatch pointer
                 }
         } else {
@@ -82,7 +82,7 @@ int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector,
                 // The pattern matches a non-empty string
                 for (unsigned int i = 0; i < count; i++) {
                         ovector[2 * i] = submatches[i].data() - str.data() + offset;
-                        ovector[2 * i + 1] = ovector[2 * i] + submatches[i].length() - 1;
+                        ovector[2 * i + 1] = ovector[2 * i] + submatches[i].length();
                 }
                 return count;
         }
