@@ -67,7 +67,7 @@ int main(int argc, char **argv)
   			subject,              /* the subject string */
   			subject_length,       /* the length of the subject */
   			0,                    /* start at offset 0 in the subject */
-  			0,                    /* default options */
+  			PCRE_NOTEMPTY,		  /* empty string is not a valid match */
   			ovector,              /* output vector for substring information */
   			OVECCOUNT);           /* number of elements in the output vector */
 
