@@ -130,7 +130,14 @@ int main(int argc, char **argv)
 	for (i = 0; i < rc; i++) {
   		char *substring_start = subject + ovector[2 * i];
   		int substring_length = ovector[2 * i + 1] - ovector[2 * i];
-  		printf("%d: %.*s\n", i, substring_length, substring_start);
+  		//printf("%d: %.*s\n", i, substring_length, substring_start);
+
+		printf("Submatch %d [%d, %d): %.*s\n", 
+		       i + 1,			// submatch ID
+                       ovector[2 * i],		// submatch start offset
+                       ovector[2 * i + 1],	// submatch end offset
+                       substring_length,	// submatch length
+                       substring_start);	// submatch pointer
   	}
 
 	pcre_free(re); 
