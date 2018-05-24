@@ -92,6 +92,12 @@ int main(int argc, char **argv)
 			case PCRE_ERROR_NOMEMORY: 
 				printf("Ran out of memory\n");                       
 				break;
+			case PCRE_ERROR_MATCHLIMIT:
+				printf("Too many matches\n");
+				break;
+			case PCRE_ERROR_RECURSIONLIMIT:
+				printf("Too large recursion degree\n");
+				break;
 			default: 
 				printf("Unknown error\n");                           
 				break;			  
