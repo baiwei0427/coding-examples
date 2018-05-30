@@ -6,36 +6,42 @@
 
 int main(int argc, char **argv)
 {
-	char *pattern;	/* regex pattern */	
-	char *subject;	/* subject string */
+	char *pattern;		/* regex pattern */	
+	char *subject;		/* subject string */
+	int startoffset;	/* start offset for matching */
 	int subject_length;	/* length of subject string */
 
-	pcre *re;	/* compiled pattern */
-	pcre_extra *sd;	/* pattern study information */
-	int rc;	/* result of pattern matching */
+	pcre *re;		/* compiled pattern */
+	pcre_extra *sd;		/* pattern study information */
+	int rc;			/* result of pattern matching */
 
 	const char *error;	/* error information */
 	int erroffset;	
 	int ovector[OVECCOUNT];
 	int i;
 
-	/* We require two arguments: pattern, subject string. */
-	if (argc != 3) {
-		printf("%s [regex pattern] [subject string] \n", argv[0]);
+	/* We require three arguments: pattern, subject string, start offset. */
+	if (argc != 4) {
+		fprintf(stderr, "%s regex_pattern subject_string start_offset\n", argv[0]);
   		return EXIT_FAILURE;
   	}
 
 	pattern = argv[1];
 	subject = argv[2];
+	startoffset = atoi(argv[3]);
 	subject_length = (int)strlen(subject);
 
+	if (startoffset < 0 || startoffset >= subject_length) {
+                fprintf(stderr, "Invalid start_offset value %d\n", startoffset); 
+  		return EXIT_FAILURE;
+        }
+
 	/* Compile the regex */
-	re = pcre_compile(
-			pattern,	/* the pattern */
-			0,			/* default options */
-  			&error,		/* for error message */
-  			&erroffset,	/* for error offset */
-  			NULL);		/* use default character tables */
+	re = pcre_compile(pattern,	/* the pattern */
+			  0,		/* default options */
+  			  &error,	/* for error message */
+  			  &erroffset,	/* for error offset */
+  			  NULL);	/* use default character tables */
 
 	/* Compilation failed: print the error message and exit */
 	if (!re) {
@@ -44,11 +50,9 @@ int main(int argc, char **argv)
   	}
 
 	/* Optimize the regex */
-	sd = pcre_study(
-			re,		/* compiled regex */
+	sd = pcre_study(re,		/* compiled regex */
 			0,		/* no options */
-			&error	/* for error message */
-			);	
+			&error);	/* for error message */
 
 	/* pcre_study() returns NULL for both errors and when it can not optimize the regex.  
 	 * The last argument is how one checks for errors (it is NULL if everything works, 
@@ -61,15 +65,14 @@ int main(int argc, char **argv)
 	}
 	 
 	/* Match the regex */
-	rc = pcre_exec(
-  			re,                   /* compiled regex pattern */
-  			sd,                   /* extra data that we have studied */
-  			subject,              /* the subject string */
-  			subject_length,       /* the length of the subject */
-  			0,                    /* start at offset 0 in the subject */
-  			PCRE_NOTEMPTY,		  /* empty string is not a valid match */
-  			ovector,              /* output vector for substring information */
-  			OVECCOUNT);           /* number of elements in the output vector */
+	rc = pcre_exec(re,		/* compiled regex pattern */
+  		       sd,		/* extra data that we have studied */
+  		       subject,		/* the subject string */
+  		       subject_length,	/* the length of the subject */
+  		       startoffset,	/* start offset */
+  		       PCRE_NOTEMPTY,	/* empty string is not a valid match */
+  		       ovector,		/* output vector for substring information */
+  		       OVECCOUNT);	/* number of elements in the output vector */
 
 	/* Matching failed: handle error cases */
 	if (rc < 0) {
