@@ -6,32 +6,40 @@
 
 using namespace std;
 
-int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector, int ovecsize, char **error_msg);
+// Executes regular expression
+int msc_regexec_ex(RE2 &re, const char *s, unsigned int slen, 
+                   int startoffset, int *ovector, int ovecsize);
 
 int main(int argc, char **argv)
 {       
-        int ovecsize = 30;
+        int ovecsize = 30, rc, startoffset;
         int ovector[ovecsize];
-        int rc; 
 
         // We require two arguments: pattern, subject string. 
-	if (argc != 3) {
-		cerr << argv[0] << " [regex pattern] [subject string]" << endl;
+	if (argc != 4) {
+		cerr << argv[0] << " regex_pattern subject_string start_offset" << endl;
   		return -1;
   	}
+
+        startoffset = atoi(argv[3]);
+        if (startoffset < 0 || startoffset >= strlen(argv[2])) {
+                cerr << "Invalid start_offset value " << startoffset << endl;
+                return -1;
+        }
 
         RE2::Options opt;
         //opt.set_case_sensitive(false);  // Do case less matching  
         //opt.set_dot_nl(true);           // Let . match \n
 
-        RE2 re("(" + string(argv[1]) + ")", opt);
+        RE2 re(argv[1], opt);
         
         if (!re.ok()) {
                 cerr << "Fail to compile regex pattern " << argv[1] << endl;
                 return -1;
         }
 
-        rc = msc_regexec_capture(re, argv[2], strlen(argv[2]), ovector, ovecsize, NULL);
+        rc = msc_regexec_ex(re, argv[2], strlen(argv[2]), startoffset, ovector, ovecsize);
+
         if (rc > 0) {
                 cout << "Match" << endl;
                 for (int i = 0; i < rc; i++) {
@@ -48,13 +56,13 @@ int main(int argc, char **argv)
         return 0;
 }
 
-int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector, int ovecsize, char **error_msg)
-{       
-        int offset = 0;
-
-        // Construct subject string
-        re2::StringPiece str(s, slen); 
-        unsigned int count = re.NumberOfCapturingGroups();
+int msc_regexec_ex(RE2 &re, const char *s, unsigned int slen, 
+                   int startoffset, int *ovector, int ovecsize)
+{
+        size_t startpos = startoffset;
+        const size_t endpos = slen;
+        // # of submatches
+        unsigned int count = 1 + re.NumberOfCapturingGroups();
 
         // Max # of submatches that we can store
         if (count > ovecsize / 3) {
@@ -62,26 +70,20 @@ int msc_regexec_capture(RE2 &re, const char *s, unsigned int slen, int *ovector,
         }
 
         re2::StringPiece submatches[count];
-        RE2::Arg args[count];
-        RE2::Arg* args_ptrs[count];        
 
-        for (unsigned int i = 0; i < count; i++) {
-                args[i] = &submatches[i];
-                args_ptrs[i] = &args[i];
-        }
-
-        while (str.length() > 0 && RE2::PartialMatchN(str, re, args_ptrs, count)) {
+        while (startpos < endpos && 
+               re.Match(s, startpos, endpos, RE2::UNANCHORED, submatches, count)) {
+                
                 // The pattern matches an empty string.  
                 if (submatches[0].length() == 0) {
                         // Match from the next byte
-                        offset++;
-                        str.remove_prefix(1);
+                        startpos++;
                         continue;
                 }
 
                 // The pattern matches a non-empty string
                 for (unsigned int i = 0; i < count; i++) {
-                        ovector[2 * i] = submatches[i].data() - str.data() + offset;
+                        ovector[2 * i] = submatches[i].data() - s;
                         ovector[2 * i + 1] = ovector[2 * i] + submatches[i].length();
                 }
                 return count;
