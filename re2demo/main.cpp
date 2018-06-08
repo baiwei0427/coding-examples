@@ -78,17 +78,18 @@ int main(int argc, char **argv)
 int msc_regexec_ex(RE2 &re, const char *s, unsigned int slen, 
                    int startoffset, int *ovector, int ovecsize)
 {
+        unsigned int i;
         size_t startpos = startoffset;
         const size_t endpos = slen;
-        // # of submatches in the regex pattern
-        unsigned int num_submatch = 1 + re.NumberOfCapturingGroups();
-        // # of submatches that we can store
-        unsigned int num_submatch_stored = (num_submatch > ovecsize / 3)? ovecsize / 3 : num_submatch;
-        
-        re2::StringPiece submatches[num_submatch_stored];
+        // # of submatches (capture groups) in the regex pattern
+        const unsigned int num_submatch = 1 + re.NumberOfCapturingGroups();
+        // Possible submatches 
+        re2::StringPiece submatches[num_submatch];
+        // # of submatches that we have stored in 'ovecsize'
+        unsigned int num_submatch_stored;
 
         while (startpos < endpos && 
-               re.Match(s, startpos, endpos, RE2::UNANCHORED, submatches, num_submatch_stored)) {
+               re.Match(s, startpos, endpos, RE2::UNANCHORED, submatches, num_submatch)) {
                 
                 // The pattern matches an empty string
                 if (submatches[0].length() == 0) {
@@ -97,18 +98,26 @@ int msc_regexec_ex(RE2 &re, const char *s, unsigned int slen,
                         continue;
                 }
 
-                // The pattern matches a non-empty string
-                for (unsigned int i = 0; i < num_submatch_stored; i++) {
-                        ovector[2 * i] = submatches[i].data() - s;
-                        ovector[2 * i + 1] = ovector[2 * i] + submatches[i].length();
+                num_submatch_stored = 0;
+                // For each submatch
+                for (i = 0; i < num_submatch; i++) {
+                        // An invalid submatch. Skip it!
+                        if (!submatches[i].data()) {
+                                continue;
+                        }
+
+                        // ovector does has enough space to store information of this submatch 
+                        if (num_submatch_stored >= ovecsize / 3) {
+                                return 0;
+                        }       
+                        
+                        // Store submatch information
+                        ovector[2 * num_submatch_stored] = submatches[i].data() - s;
+                        ovector[2 * num_submatch_stored + 1] = ovector[2 * num_submatch_stored] + submatches[i].length();
+                        num_submatch_stored++;
                 }
 
-                // The output vector is not big enough to store all submatches
-                if (num_submatch_stored < num_submatch) {
-                        return 0;
-                } else {
-                        return num_submatch;
-                }
+                return num_submatch_stored;
         }
 
         // Not matching!
