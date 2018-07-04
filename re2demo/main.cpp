@@ -78,49 +78,52 @@ int main(int argc, char **argv)
 int msc_regexec_ex(RE2 &re, const char *s, unsigned int slen, 
                    int startoffset, int *ovector, int ovecsize)
 {
-        unsigned int i;
         size_t startpos = startoffset;
         const size_t endpos = slen;
-        // # of submatches (capture groups) in the regex pattern
-        const unsigned int num_submatch = 1 + re.NumberOfCapturingGroups();
-        // Possible submatches 
+        // Total # of submatches in the regex pattern
+        int num_submatch = 1 + re.NumberOfCapturingGroups();
+        // Index of the last non empty submatch
+        int last_nonempty_submatch = num_submatch - 1;
         re2::StringPiece submatches[num_submatch];
-        // # of submatches that we have stored in 'ovecsize'
-        unsigned int num_submatch_stored;
 
-        while (startpos < endpos && 
-               re.Match(s, startpos, endpos, RE2::UNANCHORED, submatches, num_submatch)) {
-                
-                // The pattern matches an empty string
-                if (submatches[0].length() == 0) {
-                        // Match from the next byte
-                        startpos++;
-                        continue;
-                }
-
-                num_submatch_stored = 0;
-                // For each submatch
-                for (i = 0; i < num_submatch; i++) {
-                        // An invalid submatch. Skip it!
-                        if (!submatches[i].data()) {
-                                continue;
-                        }
-
-                        // ovector does has enough space to store information of this submatch 
-                        if (num_submatch_stored >= ovecsize / 3) {
-                                return 0;
-                        }       
-                        
-                        // Store submatch information
-                        ovector[2 * num_submatch_stored] = submatches[i].data() - s;
-                        ovector[2 * num_submatch_stored + 1] = ovector[2 * num_submatch_stored] + submatches[i].length();
-                        num_submatch_stored++;
-                }
-
-                return num_submatch_stored;
+        // If the string does not match the pattern
+        if (!re.Match(s, startpos, endpos, RE2::UNANCHORED, submatches, num_submatch)) {
+                return -1;
         }
 
-        // Not matching!
-        return -1;
+        // Find the last non empty submatch 
+        while (!submatches[last_nonempty_submatch].data()) {
+                last_nonempty_submatch--;
+        }
+
+        int count = min(last_nonempty_submatch + 1, ovecsize / 3);
+        // Extract submatch information as much as possible
+        for (int i = 0; i < count; i++) {
+                // An empty submatch
+                if (!submatches[i].data()) {
+                        ovector[2 * i] = -1;
+                        ovector[2 * i + 1] = -1;
+                } else {
+                        ovector[2 * i] = submatches[i].data() - s;
+                        ovector[2 * i + 1] = ovector[2 * i] + submatches[i].length();
+                }
+        }
+
+        // The output vector has enough space to store the information of  
+        // all non empty submatches + empty submatches among non empty submatches
+        if (last_nonempty_submatch + 1 <= ovecsize / 3) {
+                return last_nonempty_submatch + 1;
+        }
+
+        // Truncate empty submatches at the tail of 'ovector'        
+        if (!submatches[ovecsize / 3 - 1].data()) {
+                for (int i = ovecsize / 3 - 2; i >= 0; i--) {
+                        if (submatches[i].data()) {
+                                return i + 1;
+                        }
+                }
+        }
+        
+        return 0;        
 }
 
