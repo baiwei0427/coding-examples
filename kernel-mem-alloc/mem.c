@@ -3,9 +3,10 @@
 #include <linux/gfp.h>
 #include <linux/mm_types.h>
 #include <asm/pgtable_64.h>
+#include <linux/mmzone.h>
 
 // Allocate 2 ^ order pages
-static unsigned int order = 4;
+static unsigned int order = MAX_ORDER - 1;
 // Memory pages
 static struct page *pages = NULL;
 
