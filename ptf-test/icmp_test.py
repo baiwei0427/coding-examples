@@ -57,11 +57,11 @@ class IcmpTest(BaseTest):
                     icmp_data = '')
         
         m = Mask(exp_pkt)
-        m.set_do_not_care_scapy(IP, 'ip_ttl')
-        m.set_do_not_care_scapy(IP, 'id')
-        m.set_do_not_care_scapy(IP, 'chksum')
-        #m.set_do_not_care_scapy(ICMP, 'chksum')
-        #m.set_do_not_care_scapy(ICMP, 'icmp_data')
+        m.set_do_not_care_scapy(scapy.IP, 'ttl')
+        m.set_do_not_care_scapy(scapy.IP, 'id')
+        m.set_do_not_care_scapy(scapy.IP, 'chksum')
+        #m.set_do_not_care_scapy(scapy.ICMP, 'chksum')
+        #m.set_do_not_care_scapy(scapy.ICMP, 'icmp_data')
                         
         for i in range(self.count):
             send_packet(self, self.local_port, pkt)
