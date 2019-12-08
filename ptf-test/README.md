@@ -9,5 +9,5 @@ In the following example, we generate 10 global pause frames and 10 priority-bas
 
 In the following example, we send 10 ICMP request packets from 192.168.8.129 to 192.168.8.130. The interface is ens1d1.  
 
-<pre><code>sudo ptf --test-dir ./ --interfac 0@ens1d1 --test-params="local_port=0;count=10;local_mac='e0:07:1b:70:0c:52';remote_mac='f4:52:14:61:a9:21';local_ip='192.168.8.129';remote_ip='192.168.8.130'"
+<pre><code>sudo ptf --test-dir ./ --interface 0@ens1d1 --test-params="local_port=0;count=10;local_mac='e0:07:1b:70:0c:52';remote_mac='f4:52:14:61:a9:21';local_ip='192.168.8.129';remote_ip='192.168.8.130'"
 </code></pre>
