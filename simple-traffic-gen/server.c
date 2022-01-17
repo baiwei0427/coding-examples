@@ -59,27 +59,23 @@ int main(int argc, char **argv)
         goto err;
     }
 
-    char write_buf[MAX_MSG_SIZE] = {0};
+    char write_buf[DEFAULT_BUF_SIZE] = {0};
     unsigned int iters = 0;
     while (1) {
         unsigned int msg_size;
         char *read_buf = (char*)&msg_size;
         size_t read_buf_size = sizeof(msg_size);
 
-        if (read_exact(connection, read_buf, read_buf_size) != read_buf_size) {
+        if (read_exact(connection, read_buf, read_buf_size, read_buf_size, false) != read_buf_size) {
             fprintf(stderr, "Fail to read message size from the client\n");
             goto err;
         }
 
-        if (msg_size > MAX_MSG_SIZE) {
-            fprintf(stderr, "Message size %u > Max message size = %u\n", msg_size, MAX_MSG_SIZE);
-            goto err;
-
-        } else if (msg_size == 0) {
+        if (msg_size == 0) {
             break;
         }
 
-        if (write_exact(connection, write_buf, msg_size) != msg_size) {
+        if (write_exact(connection, write_buf, msg_size, sizeof(write_buf), true) != msg_size) {
             fprintf(stderr, "Fail to send a %u-bytes message\n", msg_size);
             goto err;
         }

@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         goto err;
     }
 
-    char read_buf[MAX_MSG_SIZE];
+    char read_buf[DEFAULT_BUF_SIZE];
     char *write_buf = (char*)&msg_size;
     size_t write_buf_size = sizeof(msg_size);
 
@@ -55,12 +55,12 @@ int main(int argc, char **argv)
 	}
 
     for (unsigned i = 0; i < iters; i++) {
-        if (write_exact(sockfd, write_buf, write_buf_size) != write_buf_size) {
+        if (write_exact(sockfd, write_buf, write_buf_size, write_buf_size, false) != write_buf_size) {
             fprintf(stderr, "Fail to send message size to %s:%hu\n", server_ip, server_port);
             goto err;
         }
 
-        if (read_exact(sockfd, read_buf, msg_size) != msg_size) {
+        if (read_exact(sockfd, read_buf, msg_size, sizeof(read_buf), true) != msg_size) {
             fprintf(stderr, "Fail to receive %u bytes data from %s:%hu\n", msg_size, server_ip, server_port);
             goto err;
         }
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
     unsigned int complete_msg = 0;
     write_buf = (char*)&complete_msg;
-    if (write_exact(sockfd, write_buf, write_buf_size) != write_buf_size) {
+    if (write_exact(sockfd, write_buf, write_buf_size, write_buf_size, false) != write_buf_size) {
         fprintf(stderr, "Fail to send completion message to %s:%hu\n", server_ip, server_port);
         goto err;
     }
@@ -140,8 +140,8 @@ static bool parse_args(int argc, char **argv)
 
             case 's':
                 msg_size = (unsigned int)strtoul(optarg, NULL, 0);
-                if (msg_size > MAX_MSG_SIZE) {
-                    fprintf(stderr, "Max message size is %u\n", MAX_MSG_SIZE);
+                if (msg_size == 0) {
+                    fprintf(stderr, "Message size must be larger than 0\n");
                     print_usage(argv[0]);
                     return false;
 

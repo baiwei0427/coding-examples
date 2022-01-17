@@ -1,59 +1,56 @@
 
 #include "common.h"
 
-// Read exactly 'count' bytes from the file descriptor 'fd'
-// and store the bytes into buffer 'buf'.
-// Return the number of bytes successfully read.
-size_t write_exact(int fd, char *buf, size_t count)
+size_t write_exact(int fd, char *buf, size_t count, size_t max_per_write, bool dummy_buf)
 {
+    // total # of bytes that have been written
+    size_t bytes_written = 0;
+    // max # of bytes to write in next write() call
+    size_t bytes_to_write = 0;
     // current buffer loccation
     char *cur_buf = NULL;
-    // # of bytes that have been written
-    size_t bytes_wrt = 0;
     int n;
 
-    if (!buf) {
+    if (unlikely(!buf)) {
         return 0;
     }
 
-    cur_buf = buf;
-
     while (count > 0) {
-        n = write(fd, cur_buf, count);
+        bytes_to_write = (count > max_per_write) ? max_per_write : count;
+        cur_buf = (dummy_buf) ? buf : (buf + bytes_written);
+        n = write(fd, cur_buf, bytes_to_write);
 
         if (n <= 0) {
             fprintf(stderr, "write error\n");
             break;
 
         } else {
-            bytes_wrt += n;
+            bytes_written += n;
             count -= n;
-            cur_buf += n;
         }
     }
 
-    return bytes_wrt;
+    return bytes_written;
 }
 
-// Write exactly 'count' bytes storing in buffer 'buf' into
-// the file descriptor 'fd'.
-// Return the number of bytes sucsessfully written.
-size_t read_exact(int fd, char *buf, size_t count)
+size_t read_exact(int fd, char *buf, size_t count, size_t max_per_read, bool dummy_buf)
 {
+    // total # of bytes that have been read
+    size_t bytes_read = 0;
+    // max # of bytes to readin next read() call
+    size_t bytes_to_read = 0;
     // current buffer loccation
     char *cur_buf = NULL;
-    // # of bytes that have been read
-    size_t bytes_read = 0;
     int n;
 
-    if (!buf) {
+    if (unlikely(!buf)) {
         return 0;
     }
 
-    cur_buf = buf;
-
     while (count > 0) {
-        n = read(fd, cur_buf, count);
+        bytes_to_read = (count > max_per_read) ? max_per_read : count;
+        cur_buf = (dummy_buf) ? buf : (buf + bytes_read);
+        n = read(fd, cur_buf, bytes_to_read);
 
         if (n <= 0) {
             fprintf(stderr, "read error\n");
@@ -62,7 +59,6 @@ size_t read_exact(int fd, char *buf, size_t count)
         } else {
             bytes_read += n;
             count -= n;
-            cur_buf += n;
         }
     }
 
